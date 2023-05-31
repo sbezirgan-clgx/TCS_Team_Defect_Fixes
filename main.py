@@ -173,7 +173,7 @@ def convert_and_send_email():
             else:
                 send_an_email(recipient=str(email_list_entry.get()), mail_subject='Test',
                               mail_body=f'Hi Varsha, \n\nData is copied in the below location from Week {date_info.jquery_start} to {date_info.jquery_end} for TCS Jira Defect Fixes \n\n{FOLDER_PATH} ',
-                              mail_cc='sbezirgan@corelogic.com')
+                              mail_cc='pgandluri@corelogic.com; taevans@corelogic.com; kschwarz@corelogic.com')
                 messagebox.showinfo(title="E-mail Status", message="E-mail has been sent.")
         else:
             send_an_email(recipient='sbezirgan@corelogic.com; jkao@corelogic.com; mgundluru@corelogic.com', mail_subject='Possible Error for TCS Defect Fixes',
@@ -226,7 +226,7 @@ file_entry.insert(0,f'Week {date_info.jquery_start} to {date_info.jquery_end}')
 file_entry.grid(row=2, column=1)
 file_entry.config(state="disabled")
 email_list_entry = Entry(width=50,fg="blue")
-email_list_entry.insert(0,"sbezirgan@corelogic.com; mainguyen@corelogic.com")
+email_list_entry.insert(0,"varssingh@corelogic.com; eehsan@corelogic.com; mgopinath@corelogic.com; vlkumar@corelogic.com")
 email_list_entry.config(state=NORMAL)
 email_list_entry.grid(row=3, column=1,ipady=3)
 email_list_entry.focus()

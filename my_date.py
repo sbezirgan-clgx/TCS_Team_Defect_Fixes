@@ -6,7 +6,7 @@ class My_date:
     def __init__(self):
         self.today = date.today()
         self.days_of_the_last_week = []
-        for i in range(9, 17):
+        for i in range(10, 17):
             self.day = self.today - timedelta(days=i)
             self.days_of_the_last_week.append(str(self.day))
         print(self.days_of_the_last_week)
