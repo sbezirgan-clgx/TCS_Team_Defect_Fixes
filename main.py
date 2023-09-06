@@ -1,4 +1,5 @@
 from jira import JIRA
+import xlsxwriter
 import os
 import pandas as pd
 from pathlib import Path
@@ -75,7 +76,9 @@ jira =start_connection()
 all_fields = jira.fields()
 nameMap = {field['id']:field['name'] for field in all_fields}
 #print(nameMap)
-jira_Search_result = jira.search_issues(jql_str=f'project = "EDG - QA Transaction TCS" AND  "Created"  >= {date_info.jquery_start} AND "Created" <= {date_info.jquery_end} AND Status = Open AND Sub-projects in ("Transaction QA","IRM monitoring")',json_result=True,maxResults=1000)
+jira_Search_result = jira.search_issues(jql_str=f'project = "EDG - QA Transaction TCS" AND  "Created"  >= {date_info.jquery_start} AND "Created" <= {date_info.jquery_end} AND Status = Open AND Sub-projects in ("Transaction QA","IRM monitoring","TCS Internal QA")',json_result=True,maxResults=1000)
+jira_search_result_2 = jira.search_issues(jql_str=f'project = EQAP AND cf[13194] = "QA Onshore" AND "Created"  >= {date_info.jquery_start2} AND "Created" <= {date_info.jquery_end2} AND "Target Cycle" = "QCPI pre-prod" AND status = Open and "Vendor Name" = TCS',json_result=True,maxResults=1000)
+
 print(jira_Search_result.keys())
 #print(type(jira_Search_result["issues"]))
 def create_the_file():
@@ -118,13 +121,76 @@ def create_the_file():
         csv_row["Type of Error"] = single_issue["fields"]["customfield_24505"]["value"]
         csv_row["Sample Data"] = single_issue["fields"]["customfield_24528"]
         if str(type(single_issue["fields"]["assignee"])) == "<class 'dict'>":
-            csv_row["Assignee"] = single_issue["fields"]["assignee"]["value"]
+            csv_row["Assignee"] = single_issue["fields"]["assignee"]["name"]
         elif str(type(single_issue["fields"]["assignee"])) == "<class 'NoneType'>":
             csv_row["Assignee"] = ''
         csv_row["Critical/Non Critical"] = single_issue["fields"]["customfield_24506"]["value"]
 
         csv_list.append(csv_row)
     print(csv_list)
+    csv_list2 = []
+    for single_issue in jira_search_result_2["issues"]:
+        print(single_issue["fields"]["assignee"])
+        csv_row = {}
+        csv_row["TCS Status"] = ''
+        csv_row["TCS Comments"] = ''
+        csv_row["Key"] = single_issue["key"]
+        csv_row["OnShore QA Validation"] = ''
+        csv_row["Onshore QA Review Date"] = ''
+        csv_row["Status"] = single_issue["fields"]["status"]["name"]
+        #csv_row["Sub-Projects"] = single_issue["fields"]["customfield_24502"]["value"]
+        csv_row["Vendor"] = single_issue["fields"]["customfield_24513"]["value"]
+        csv_row["State"] = single_issue["fields"]["customfield_18909"]["value"]
+        csv_row["County"] = single_issue["fields"]["customfield_25100"]["value"]
+        csv_row["Document Year"] = single_issue["fields"]["customfield_26002"]
+        csv_row["Doc Number"] = single_issue["fields"]["customfield_24519"]
+        csv_row["Recording Date"] = single_issue["fields"]["customfield_24526"]
+        csv_row["Issue Type"] = single_issue["fields"]["issuetype"]["name"]
+        csv_row["Recording Book"] = single_issue["fields"]["customfield_26900"]
+        csv_row["Recording Page"] = single_issue["fields"]["customfield_27309"]
+        #csv_row["Deed"] = single_issue["fields"]["customfield_24501"]["value"]
+        #csv_row["DAMAR Type"] = single_issue["fields"]["customfield_24511"]["value"]
+        if str(type(single_issue["fields"]["customfield_24512"])) == "<class 'dict'>":
+            csv_row["3072 Fields"] = single_issue["fields"]["customfield_24512"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24512"])) == "<class 'NoneType'>":
+            csv_row["3072 Fields"] = ''
+        if str(type(single_issue["fields"]["customfield_24501"])) == "<class 'dict'>":
+            csv_row["Deed"] = single_issue["fields"]["customfield_24501"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24501"])) == "<class 'NoneType'>":
+            csv_row["Deed"] = ''
+        if str(type(single_issue["fields"]["customfield_24511"])) == "<class 'dict'>":
+            csv_row["DAMAR Type"] = single_issue["fields"]["customfield_24511"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24511"])) == "<class 'NoneType'>":
+            csv_row["DAMAR Type"] = ''
+
+        if str(type(single_issue["fields"]["customfield_24508"])) == "<class 'dict'>":
+            csv_row["ADC"] = single_issue["fields"]["customfield_24508"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24508"])) == "<class 'NoneType'>":
+            csv_row["ADC"] = ''
+        csv_row["Summary"] = single_issue["fields"]["summary"]
+        csv_row["Description"] = single_issue["fields"]["description"]
+        csv_row["Transmission Date"] = single_issue["fields"]["customfield_24529"]
+        csv_row["Created"] = single_issue["fields"]['created'].split("T")[0] + " " + \
+                             single_issue["fields"]['created'].split("T")[1].split(".")[0]
+        csv_row["Batch Date"] = single_issue["fields"]["customfield_24515"]
+        #csv_row["Type of Error"] = single_issue["fields"]["customfield_24505"]["value"]
+        csv_row["Sample Data"] = single_issue["fields"]["customfield_24528"]
+        if str(type(single_issue["fields"]["assignee"])) == "<class 'dict'>":
+            csv_row["Assignee"] = single_issue["fields"]["assignee"]["name"]
+        elif str(type(single_issue["fields"]["assignee"])) == "<class 'NoneType'>":
+            csv_row["Assignee"] = ''
+        #csv_row["Critical/Non Critical"] = single_issue["fields"]["customfield_24506"]["value"]
+        if str(type(single_issue["fields"]["customfield_24506"])) == "<class 'dict'>":
+            csv_row["Critical/Non Critical"] = single_issue["fields"]["customfield_24506"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24506"])) == "<class 'NoneType'>":
+            csv_row["Critical/Non Critical"] = ''
+        if str(type(single_issue["fields"]["customfield_24505"])) == "<class 'dict'>":
+            csv_row["Type of Error"] = single_issue["fields"]["customfield_24505"]["value"]
+        elif str(type(single_issue["fields"]["customfield_24505"])) == "<class 'NoneType'>":
+            csv_row["Type of Error"] = ''
+        csv_list2.append(csv_row)
+
+    df_2 = pd.DataFrame(csv_list2)
     df = pd.DataFrame(csv_list)
     result = check_if_folder_exists(folder_path=FOLDER_PATH)
     if result is not True:
@@ -134,7 +200,11 @@ def create_the_file():
         df.to_csv(
             rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\out.csv',
             index=False)
+        df_2.to_csv(
+            rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\out5.csv',
+            index=False)
         df.to_csv('out1.csv', index=False)
+        df_2.to_csv('out6.csv', index=False)
         messagebox.showinfo(title="File Status", message="File export successful")
         os.startfile(rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}')
         print(line_count('out1.csv'))
@@ -145,7 +215,7 @@ def create_the_file():
 def convert_and_send_email():
     if check_if_folder_exists(
             folder_path=rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\out.csv'):
-        with open('out1.csv', "r") as inf:
+        with open('out1.csv', "r",encoding='utf8') as inf:
             # creating a csv reader object
 
             csvreader = csv.reader(inf)
@@ -160,20 +230,59 @@ def convert_and_send_email():
             # get total number of rows
             a = (csvreader.line_num)
             print(a)
+
+        with open('out6.csv', "r",encoding='utf8') as inf2:
+            # creating a csv reader object
+
+            csvreader2 = csv.reader(inf2)
+
+            # extracting field names through first row
+            fields2 = next(csvreader2)
+
+            # extracting each data row one by one
+            for row in csvreader2:
+                rows.append(row)
+
+            # get total number of rows
+            b = (csvreader2.line_num)
+            print(b)
+
         if a > 1:
             try:
                 convert_csv_to_xlsx(
                     csv_path=rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\out.csv',
                     file_name=rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\TCS_Defect_Fixes.xlsx')
                 remove_the_csv_file(location=FOLDER_PATH, file_name='out.csv')
+                if b > 1:
+                    convert_csv_to_xlsx(
+                        csv_path=rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\out5.csv',
+                        file_name=rf'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_{date_info.get_query_Start()}_to_{date_info.get_query_end()}\TCS_Defect_Fixes_QCPI.xlsx')
+                    remove_the_csv_file(location=FOLDER_PATH, file_name='out5.csv')
+                else:
+                    remove_the_csv_file(location=FOLDER_PATH, file_name='out5.csv')
+                    workbook = xlsxwriter.Workbook(
+                        r'\\filer-diablo-prd\data_acquisition\QA\EagleQC\TCS_defect_fixes\Week_08-21-2023_to_08-27-2023\TCS_Defect_Fixes_QCPI_Blank.xlsx')
+
+                    # The workbook object is then used to add new
+                    # worksheet via the add_worksheet() method.
+                    worksheet = workbook.add_worksheet()
+
+                    # Use the worksheet object to write
+                    # data via the write() method.
+                    worksheet.write('A1', 'No data has been found for the given week')
+
+                    # Finally, close the Excel file
+                    # via the close() method.
+                    workbook.close()
+
             except:
                 send_an_email(recipient='sbezirgan@corelogic.com', mail_subject='Test',
                               mail_body=f'Hi Varsha, No data has been found in the document',
                               mail_cc='sbezirgan@corelogic.com')
             else:
-                send_an_email(recipient=str(email_list_entry.get()), mail_subject='Test',
+                send_an_email(recipient=str(email_list_entry.get()), mail_subject='TCS Defect Hand Off',
                               mail_body=f'Hi Varsha, \n\nData is copied in the below location from Week {date_info.jquery_start} to {date_info.jquery_end} for TCS Jira Defect Fixes \n\n{FOLDER_PATH} ',
-                              mail_cc='pgandluri@corelogic.com; taevans@corelogic.com; kschwarz@corelogic.com')
+                              mail_cc='mgundluru@corelogic.com; taevans@corelogic.com; kschwarz@corelogic.com; jkao@corelogic.com; sbezirgan@corelogic.com')
                 messagebox.showinfo(title="E-mail Status", message="E-mail has been sent.")
         else:
             send_an_email(recipient='sbezirgan@corelogic.com; jkao@corelogic.com; mgundluru@corelogic.com', mail_subject='Possible Error for TCS Defect Fixes',
